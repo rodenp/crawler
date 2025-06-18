@@ -1,7 +1,7 @@
 {
   "domain": "www.skool.com",
-  "lastUpdated": "2025-06-18T21:32:34.525Z",
-  "version": 94,
+  "lastUpdated": "2025-06-18T21:48:44.426Z",
+  "version": 95,
   "trainedComponents": [
     {
       "id": "Settings",
@@ -366,6 +366,64 @@
       },
       "createdAt": "2025-06-18T21:32:34.525Z",
       "lastUpdated": "2025-06-18T21:32:34.525Z"
+    },
+    {
+      "id": "Traffic",
+      "pageUrl": "https://www.skool.com/testxx-7587",
+      "pagePath": "/testxx-7587",
+      "type": "modal",
+      "name": "Traffic",
+      "selector": ".styled__MetricItem-sc-118pr9v-4",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Traffic",
+        "tagName": "DIV",
+        "className": "styled__MetricItem-sc-118pr9v-4 bGqEDe",
+        "id": "",
+        "left": 658,
+        "top": 333,
+        "width": 234,
+        "height": 87,
+        "zIndex": "auto",
+        "position": "static",
+        "modalScore": 10,
+        "contextElements": [
+          {
+            "tagName": "div",
+            "className": "styled__MetricItem-sc-118pr9v-4 bGqEDe",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__MetricItems-sc-118pr9v-3 iDbXyO",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__BoxWrapper-sc-esqoz3-0 jSzCth",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__MetricLabel-sc-118pr9v-6 jAyTkG",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T21:48:44.426Z",
+      "lastUpdated": "2025-06-18T21:48:44.426Z"
     }
   ]
 }

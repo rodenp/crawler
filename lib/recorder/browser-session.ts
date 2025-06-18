@@ -4608,15 +4608,19 @@ export class LiveBrowserSession {
             pointer-events: auto !important;
             z-index: 2147483647 !important;
             max-width: 500px !important;
+            cursor: move !important;
+            user-select: none !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
           `;
           instructionPanel.innerHTML = `
-            <div style="margin-bottom: 10px; font-weight: bold;">🎯 Modal Training Mode</div>
+            <div style="margin-bottom: 10px; font-weight: bold; cursor: move;">🎯 Modal Training Mode</div>
             <div style="font-size: 12px; opacity: 0.9; line-height: 1.4;">
               Hover over elements to see colored borders.<br>
               Click on modal elements to train the detection system.<br>
               <span style="color: #ff6b35;">Orange</span> = High modal potential | 
               <span style="color: #f39c12;">Yellow</span> = Medium | 
-              <span style="color: #3498db;">Blue</span> = Low
+              <span style="color: #3498db;">Blue</span> = Low<br>
+              <span style="font-size: 10px; opacity: 0.7;">💡 Drag this panel to move it out of the way</span>
             </div>
             <button id="exit-training" style="
               margin-top: 10px; padding: 5px 15px; background: #e74c3c; 
@@ -4625,6 +4629,49 @@ export class LiveBrowserSession {
             ">Exit Training</button>
           `;
           document.body.appendChild(instructionPanel);
+
+          // Make the instruction panel draggable
+          let isDragging = false;
+          let dragOffsetX = 0;
+          let dragOffsetY = 0;
+          
+          instructionPanel.addEventListener('mousedown', (e) => {
+            // Only allow dragging on the panel itself, not the exit button
+            if ((e.target as HTMLElement).id === 'exit-training') return;
+            
+            isDragging = true;
+            const rect = instructionPanel.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+            
+            // Remove transform and use absolute positioning
+            instructionPanel.style.transform = 'none';
+            instructionPanel.style.left = rect.left + 'px';
+            instructionPanel.style.top = rect.top + 'px';
+            
+            e.preventDefault();
+            e.stopPropagation();
+          });
+          
+          document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const newX = e.clientX - dragOffsetX;
+            const newY = e.clientY - dragOffsetY;
+            
+            // Keep within viewport bounds
+            const maxX = window.innerWidth - instructionPanel.offsetWidth;
+            const maxY = window.innerHeight - instructionPanel.offsetHeight;
+            
+            instructionPanel.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+            instructionPanel.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+            
+            e.preventDefault();
+          });
+          
+          document.addEventListener('mouseup', () => {
+            isDragging = false;
+          });
 
           // Add element highlighting on mouseover
           let currentHighlight: HTMLElement | null = null;
@@ -5049,10 +5096,7 @@ export class LiveBrowserSession {
                     console.log('[Modal Training] Instruction panel removed');
                   }
                   
-                  // Notify the browser session that training mode is disabled
-                  if ((window as any).notifyTrainingModeExited) {
-                    (window as any).notifyTrainingModeExited();
-                  }
+                  // Don't disable session training mode - only exit modal training UI
                   
                   console.log('[Modal Training] Training mode exited successfully');
                 } catch (error) {
@@ -5947,15 +5991,19 @@ export class LiveBrowserSession {
             pointer-events: auto !important;
             z-index: 2147483647 !important;
             max-width: 500px !important;
+            cursor: move !important;
+            user-select: none !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
           `;
           instructionPanel.innerHTML = `
-            <div style="margin-bottom: 10px; font-weight: bold;">🎯 Modal Training Mode</div>
+            <div style="margin-bottom: 10px; font-weight: bold; cursor: move;">🎯 Modal Training Mode</div>
             <div style="font-size: 12px; opacity: 0.9; line-height: 1.4;">
               Hover over elements to see colored borders.<br>
               Click on modal elements to train the detection system.<br>
               <span style="color: #ff6b35;">Orange</span> = High modal potential | 
               <span style="color: #f39c12;">Yellow</span> = Medium | 
-              <span style="color: #3498db;">Blue</span> = Low
+              <span style="color: #3498db;">Blue</span> = Low<br>
+              <span style="font-size: 10px; opacity: 0.7;">💡 Drag this panel to move it out of the way</span>
             </div>
             <button id="exit-training" style="
               margin-top: 10px; padding: 5px 15px; background: #e74c3c; 
@@ -5964,6 +6012,49 @@ export class LiveBrowserSession {
             ">Exit Training</button>
           `;
           document.body.appendChild(instructionPanel);
+
+          // Make the instruction panel draggable
+          let isDragging = false;
+          let dragOffsetX = 0;
+          let dragOffsetY = 0;
+          
+          instructionPanel.addEventListener('mousedown', (e) => {
+            // Only allow dragging on the panel itself, not the exit button
+            if ((e.target as HTMLElement).id === 'exit-training') return;
+            
+            isDragging = true;
+            const rect = instructionPanel.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left;
+            dragOffsetY = e.clientY - rect.top;
+            
+            // Remove transform and use absolute positioning
+            instructionPanel.style.transform = 'none';
+            instructionPanel.style.left = rect.left + 'px';
+            instructionPanel.style.top = rect.top + 'px';
+            
+            e.preventDefault();
+            e.stopPropagation();
+          });
+          
+          document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const newX = e.clientX - dragOffsetX;
+            const newY = e.clientY - dragOffsetY;
+            
+            // Keep within viewport bounds
+            const maxX = window.innerWidth - instructionPanel.offsetWidth;
+            const maxY = window.innerHeight - instructionPanel.offsetHeight;
+            
+            instructionPanel.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+            instructionPanel.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+            
+            e.preventDefault();
+          });
+          
+          document.addEventListener('mouseup', () => {
+            isDragging = false;
+          });
 
           // Add element highlighting on mouseover
           let currentHighlight: HTMLElement | null = null;
@@ -6304,10 +6395,7 @@ export class LiveBrowserSession {
                 console.log('[Modal Training] Instruction panel removed');
               }
               
-              // Notify the browser session that training mode is disabled
-              if ((window as any).notifyTrainingModeExited) {
-                (window as any).notifyTrainingModeExited();
-              }
+              // Don't disable session training mode - only exit modal training UI
               
               console.log('[Modal Training] Training mode exited successfully');
               document.removeEventListener('mouseover', mouseoverHandler);
