@@ -1,0 +1,257 @@
+{
+  "domain": "www.skool.com",
+  "lastUpdated": "2025-06-18T12:47:57.885Z",
+  "version": 26,
+  "trainedComponents": [
+    {
+      "id": "styled__ModalWrapper-sc-7eym6d-0_div_relative",
+      "pageUrl": "https://www.skool.com/testxx-7587/classroom",
+      "pagePath": "/testxx-7587/classroom",
+      "type": "modal",
+      "name": "Edit Course",
+      "selector": ".styled__ModalWrapper-sc-7eym6d-0",
+      "trainingData": {
+        "tagName": "div",
+        "primaryClass": "styled__ModalWrapper-sc-7eym6d-0",
+        "allClasses": "styled__ModalWrapper-sc-7eym6d-0 dZKBqb",
+        "id": null,
+        "position": "relative",
+        "zIndex": 0,
+        "width": 800,
+        "height": 786.5,
+        "top": 12,
+        "left": 240,
+        "backgroundColor": "rgb(255, 255, 255)",
+        "display": "block",
+        "textContent": "Edit courseCourse nameCourse name13 / 50Som great descriptionCourse descriptionCourse description21 ",
+        "modalScore": 65,
+        "hasFormElements": true,
+        "timestamp": "2025-06-16T22:08:17.543Z",
+        "url": "https://www.skool.com/testxx-7587/classroom",
+        "componentType": "modal",
+        "componentName": "Edit Course",
+        "contextElements": [
+          {
+            "tagName": "label",
+            "className": "styled__PermissionOption-sc-1qwbnnp-9 ikZrt",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "form",
+            "className": "styled__PermissionsForm-sc-1qwbnnp-8 ixaNKR",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__ModalBody-sc-7eym6d-3 biFwPS",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "button",
+            "className": "styled__SelectionWrapper-sc-ojqj0m-1 gXYuRV",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-16T22:00:33.505Z",
+      "lastUpdated": "2025-06-16T22:08:17.548Z"
+    },
+    {
+      "id": "DIV_static_zauto",
+      "pageUrl": "https://www.skool.com/testxx-7587",
+      "pagePath": "/testxx-7587",
+      "type": "modal",
+      "name": "Settings",
+      "selector": "div",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Settings",
+        "tagName": "DIV",
+        "className": "styled__TabModalDesktop-sc-1p35nnr-1 fxoRNW",
+        "id": "",
+        "left": 103,
+        "top": 12,
+        "width": 1074,
+        "height": 696,
+        "zIndex": "auto",
+        "position": "static",
+        "modalScore": 10,
+        "contextElements": [
+          {
+            "tagName": "div",
+            "className": "styled__MetricItems-sc-118pr9v-3 iDbXyO",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__BoxWrapper-sc-esqoz3-0 jSzCth",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__BoxWrapper-sc-esqoz3-0 cXMjcI Column-sc-1h1w9fe-0 duwkcK",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__MetricItem-sc-118pr9v-4 bGqEDe",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__MetricItem-sc-118pr9v-4 bGqEDe",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T09:52:57.035Z",
+      "lastUpdated": "2025-06-18T09:52:57.035Z"
+    },
+    {
+      "id": "DIV_relative_zauto",
+      "pageUrl": "https://www.skool.com/",
+      "pagePath": "/",
+      "type": "modal",
+      "name": "Login2",
+      "selector": "div",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Login2",
+        "tagName": "DIV",
+        "className": "styled__ModalWrapper-sc-7eym6d-0 dZKBqb",
+        "id": "",
+        "left": 413,
+        "top": 131.046875,
+        "width": 454,
+        "height": 457.90625,
+        "zIndex": "auto",
+        "position": "relative",
+        "modalScore": 10,
+        "contextElements": [
+          {
+            "tagName": "div",
+            "className": "styled__InputWrapper-sc-1saiqqb-4 cJtswi",
+            "position": "relative",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__InputContainer-sc-1saiqqb-5 jxyKwe",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__SignUpInputs-sc-1xe4ng4-1 gJnjJs",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "fieldset",
+            "className": "styled__InputBorder-sc-1saiqqb-3 jcVEec",
+            "position": "absolute",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          },
+          {
+            "tagName": "label",
+            "className": "styled__InputLabel-sc-1saiqqb-0 eAGLJR",
+            "position": "absolute",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T11:42:44.660Z",
+      "lastUpdated": "2025-06-18T12:46:55.456Z"
+    },
+    {
+      "id": "BUTTON",
+      "pageUrl": "https://www.skool.com/",
+      "pagePath": "/",
+      "type": "modal",
+      "name": "modal_1750250877883",
+      "selector": "button",
+      "trainingData": {
+        "tagName": "BUTTON",
+        "className": "",
+        "id": "",
+        "textContent": "Train Modal Detection",
+        "attributes": {
+          "style": "display: block !important; width: auto !important; padding: 3px 6px !important; margin: 0px 0px 2px !important; background: rgb(142, 68, 173) !important; color: white !important; border: none !important; border-radius: 2px !important; cursor: pointer !important; font-size: 9px !important; font-family: monospace !important; white-space: nowrap !important;"
+        },
+        "contextElements": [
+          {
+            "tagName": "div",
+            "className": "styled__BaseModalWrapper-sc-1j2ymu8-0 eAgXBU skool-ui-base-modal",
+            "position": "fixed",
+            "zIndex": 1300,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "body",
+            "className": "",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__ModalContent-sc-1j2ymu8-2 dyZqYB",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T12:47:57.885Z",
+      "lastUpdated": "2025-06-18T12:47:57.885Z"
+    }
+  ]
+}

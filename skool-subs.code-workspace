@@ -1,0 +1,35 @@
+{
+	"folders": [
+		{
+			"path": "../skool-subs"
+		},
+		{
+			"path": "../../../Documents/Onlook"
+		},
+		{
+			"path": "../course-builder-samedev"
+		},
+		{
+			"path": "../course-builder-package"
+		},
+		{
+			"path": "../frontend-backend-auth-postgres-stripe"
+		},
+		{
+			"path": "../course-builder-framework"
+		},
+		{
+			"path": "../course-builder-plugin"
+		},
+		{
+			"path": "../mcp-full-app-with-port-timestamp"
+		},
+		{
+			"path": "../mcp-scraper"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}
