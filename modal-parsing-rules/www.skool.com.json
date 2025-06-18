@@ -1,80 +1,15 @@
 {
   "domain": "www.skool.com",
-  "lastUpdated": "2025-06-18T12:47:57.885Z",
-  "version": 26,
+  "lastUpdated": "2025-06-18T21:32:34.525Z",
+  "version": 94,
   "trainedComponents": [
     {
-      "id": "styled__ModalWrapper-sc-7eym6d-0_div_relative",
-      "pageUrl": "https://www.skool.com/testxx-7587/classroom",
-      "pagePath": "/testxx-7587/classroom",
-      "type": "modal",
-      "name": "Edit Course",
-      "selector": ".styled__ModalWrapper-sc-7eym6d-0",
-      "trainingData": {
-        "tagName": "div",
-        "primaryClass": "styled__ModalWrapper-sc-7eym6d-0",
-        "allClasses": "styled__ModalWrapper-sc-7eym6d-0 dZKBqb",
-        "id": null,
-        "position": "relative",
-        "zIndex": 0,
-        "width": 800,
-        "height": 786.5,
-        "top": 12,
-        "left": 240,
-        "backgroundColor": "rgb(255, 255, 255)",
-        "display": "block",
-        "textContent": "Edit courseCourse nameCourse name13 / 50Som great descriptionCourse descriptionCourse description21 ",
-        "modalScore": 65,
-        "hasFormElements": true,
-        "timestamp": "2025-06-16T22:08:17.543Z",
-        "url": "https://www.skool.com/testxx-7587/classroom",
-        "componentType": "modal",
-        "componentName": "Edit Course",
-        "contextElements": [
-          {
-            "tagName": "label",
-            "className": "styled__PermissionOption-sc-1qwbnnp-9 ikZrt",
-            "position": "static",
-            "zIndex": 0,
-            "level": 1,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "form",
-            "className": "styled__PermissionsForm-sc-1qwbnnp-8 ixaNKR",
-            "position": "static",
-            "zIndex": 0,
-            "level": 2,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "div",
-            "className": "styled__ModalBody-sc-7eym6d-3 biFwPS",
-            "position": "static",
-            "zIndex": 0,
-            "level": 3,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "button",
-            "className": "styled__SelectionWrapper-sc-ojqj0m-1 gXYuRV",
-            "position": "static",
-            "zIndex": 0,
-            "level": 0,
-            "relationship": "sibling"
-          }
-        ]
-      },
-      "createdAt": "2025-06-16T22:00:33.505Z",
-      "lastUpdated": "2025-06-16T22:08:17.548Z"
-    },
-    {
-      "id": "DIV_static_zauto",
+      "id": "Settings",
       "pageUrl": "https://www.skool.com/testxx-7587",
       "pagePath": "/testxx-7587",
       "type": "modal",
       "name": "Settings",
-      "selector": "div",
+      "selector": ".styled__TabModalDesktop-sc-1p35nnr-1",
       "trainingData": {
         "componentType": "modal",
         "componentName": "Settings",
@@ -131,36 +66,284 @@
           }
         ]
       },
-      "createdAt": "2025-06-18T09:52:57.035Z",
-      "lastUpdated": "2025-06-18T09:52:57.035Z"
+      "createdAt": "2025-06-18T21:06:44.500Z",
+      "lastUpdated": "2025-06-18T21:06:44.500Z"
     },
     {
-      "id": "DIV_relative_zauto",
-      "pageUrl": "https://www.skool.com/",
-      "pagePath": "/",
+      "id": "Edit_Course",
+      "pageUrl": "https://www.skool.com/testxx-7587/classroom",
+      "pagePath": "/testxx-7587/classroom",
       "type": "modal",
-      "name": "Login2",
-      "selector": "div",
+      "name": "Edit Course",
+      "selector": ".styled__ModalWrapper-sc-7eym6d-0",
       "trainingData": {
         "componentType": "modal",
-        "componentName": "Login2",
+        "componentName": "Edit Course",
         "tagName": "DIV",
         "className": "styled__ModalWrapper-sc-7eym6d-0 dZKBqb",
         "id": "",
-        "left": 413,
-        "top": 131.046875,
-        "width": 454,
-        "height": 457.90625,
+        "left": 400,
+        "top": 57.55859375,
+        "width": 800,
+        "height": 784.873046875,
+        "zIndex": "auto",
+        "position": "relative",
+        "modalScore": 10,
+        "contextElements": [
+          {
+            "tagName": "label",
+            "className": "styled__PermissionOption-sc-1qwbnnp-9 ikZrt",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "form",
+            "className": "styled__PermissionsForm-sc-1qwbnnp-8 ixaNKR",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__ModalBody-sc-7eym6d-3 biFwPS",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "button",
+            "className": "styled__SelectionWrapper-sc-ojqj0m-1 gXYuRV",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T21:11:08.891Z",
+      "lastUpdated": "2025-06-18T21:11:08.891Z"
+    },
+    {
+      "id": "Level_Unlock",
+      "pageUrl": "https://www.skool.com/testxx-7587/classroom",
+      "pagePath": "/testxx-7587/classroom",
+      "type": "modal",
+      "name": "Level Unlock",
+      "selector": ".styled__PermissionOption-sc-1qwbnnp-9",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Level Unlock",
+        "tagName": "LABEL",
+        "className": "styled__PermissionOption-sc-1qwbnnp-9 ikZrt",
+        "id": "",
+        "left": 580.048828125,
+        "top": 392.24609375,
+        "width": 146.806640625,
+        "height": 116.962890625,
+        "zIndex": "auto",
+        "position": "static",
+        "modalScore": 0,
+        "contextElements": [
+          {
+            "tagName": "label",
+            "className": "styled__PermissionOption-sc-1qwbnnp-9 ikZrt",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "form",
+            "className": "styled__PermissionsForm-sc-1qwbnnp-8 ixaNKR",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__ModalBody-sc-7eym6d-3 biFwPS",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "button",
+            "className": "styled__SelectionWrapper-sc-ojqj0m-1 gXYuRV",
+            "position": "static",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T21:20:41.087Z",
+      "lastUpdated": "2025-06-18T21:20:41.087Z"
+    },
+    {
+      "id": "Profile_Picture",
+      "pageUrl": "https://www.skool.com/testxx-7587/-/leaderboards",
+      "pagePath": "/testxx-7587/-/leaderboards",
+      "type": "modal",
+      "name": "Profile Picture",
+      "selector": ".styled__UserInfoWrapper-sc-hb97og-3",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Profile Picture",
+        "tagName": "DIV",
+        "className": "styled__UserInfoWrapper-sc-hb97og-3 ilRdrF",
+        "id": "",
+        "left": 274.12109375,
+        "top": 197.63671875,
+        "width": 352.333984375,
+        "height": 300.712890625,
         "zIndex": "auto",
         "position": "relative",
         "modalScore": 10,
         "contextElements": [
           {
             "tagName": "div",
-            "className": "styled__InputWrapper-sc-1saiqqb-4 cJtswi",
+            "className": "styled__AvatarWrapper-sc-1o1lx2q-0 kdtNwu",
             "position": "relative",
             "zIndex": 0,
             "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "a",
+            "className": "styled__ChildrenLink-sc-1brgbbt-1 fQYQam",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__UserInfoWrapper-sc-hb97og-3 ilRdrF",
+            "position": "relative",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "span",
+            "className": "styled__AvatarWrapper-sc-1ruw40r-0 BUAVN",
+            "position": "relative",
+            "zIndex": 0,
+            "level": 0,
+            "relationship": "sibling"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__BadgeWrapper-sc-1o1lx2q-2 iVmISE",
+            "position": "absolute",
+            "zIndex": 1,
+            "level": 0,
+            "relationship": "sibling"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T21:23:01.472Z",
+      "lastUpdated": "2025-06-18T21:23:01.472Z"
+    },
+    {
+      "id": "Levels",
+      "pageUrl": "https://www.skool.com/testxx-7587/-/leaderboards",
+      "pagePath": "/testxx-7587/-/leaderboards",
+      "type": "modal",
+      "name": "Levels",
+      "selector": ".styled__LevelBlocksWrapper-sc-hb97og-8",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Levels",
+        "tagName": "DIV",
+        "className": "styled__LevelBlocksWrapper-sc-hb97og-8 dmSCWh",
+        "id": "",
+        "left": 626.455078125,
+        "top": 204.16015625,
+        "width": 699.4140625,
+        "height": 287.666015625,
+        "zIndex": "auto",
+        "position": "static",
+        "modalScore": 10,
+        "contextElements": [
+          {
+            "tagName": "div",
+            "className": "styled__ProgressCardRightCol-sc-hb97og-7 ljFapR",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__CardWrapper-sc-jrheml-0 hesuCC styled__GamificationProgressCard-sc-hb97og-0 hAOsjp",
+            "position": "relative",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__Column-sc-hb97og-17 cwfpji",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
+            "relationship": "parent"
+          }
+        ]
+      },
+      "createdAt": "2025-06-18T21:24:07.282Z",
+      "lastUpdated": "2025-06-18T21:24:07.282Z"
+    },
+    {
+      "id": "Add_Price",
+      "pageUrl": "https://www.skool.com/testxx-7587",
+      "pagePath": "/testxx-7587",
+      "type": "modal",
+      "name": "Add Price",
+      "selector": ".styled__ModalWrapper-sc-7eym6d-0",
+      "trainingData": {
+        "componentType": "modal",
+        "componentName": "Add Price",
+        "tagName": "DIV",
+        "className": "styled__ModalWrapper-sc-7eym6d-0 dZKBqb",
+        "id": "",
+        "left": 572.998046875,
+        "top": 233.671875,
+        "width": 453.994140625,
+        "height": 432.65625,
+        "zIndex": "auto",
+        "position": "relative",
+        "modalScore": 10,
+        "contextElements": [
+          {
+            "tagName": "div",
+            "className": "styled__AddPriceModalWrapper-sc-1w5znzb-0 kBdbrp",
+            "position": "static",
+            "zIndex": 0,
+            "level": 1,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "div",
+            "className": "styled__ModalBody-sc-7eym6d-3 biFwPS",
+            "position": "static",
+            "zIndex": 0,
+            "level": 2,
+            "relationship": "parent"
+          },
+          {
+            "tagName": "form",
+            "className": "",
+            "position": "static",
+            "zIndex": 0,
+            "level": 3,
             "relationship": "parent"
           },
           {
@@ -168,81 +351,12 @@
             "className": "styled__InputContainer-sc-1saiqqb-5 jxyKwe",
             "position": "static",
             "zIndex": 0,
-            "level": 2,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "div",
-            "className": "styled__SignUpInputs-sc-1xe4ng4-1 gJnjJs",
-            "position": "static",
-            "zIndex": 0,
-            "level": 3,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "fieldset",
-            "className": "styled__InputBorder-sc-1saiqqb-3 jcVEec",
-            "position": "absolute",
-            "zIndex": 0,
             "level": 0,
             "relationship": "sibling"
           },
           {
-            "tagName": "label",
-            "className": "styled__InputLabel-sc-1saiqqb-0 eAGLJR",
-            "position": "absolute",
-            "zIndex": 0,
-            "level": 0,
-            "relationship": "sibling"
-          }
-        ]
-      },
-      "createdAt": "2025-06-18T11:42:44.660Z",
-      "lastUpdated": "2025-06-18T12:46:55.456Z"
-    },
-    {
-      "id": "BUTTON",
-      "pageUrl": "https://www.skool.com/",
-      "pagePath": "/",
-      "type": "modal",
-      "name": "modal_1750250877883",
-      "selector": "button",
-      "trainingData": {
-        "tagName": "BUTTON",
-        "className": "",
-        "id": "",
-        "textContent": "Train Modal Detection",
-        "attributes": {
-          "style": "display: block !important; width: auto !important; padding: 3px 6px !important; margin: 0px 0px 2px !important; background: rgb(142, 68, 173) !important; color: white !important; border: none !important; border-radius: 2px !important; cursor: pointer !important; font-size: 9px !important; font-family: monospace !important; white-space: nowrap !important;"
-        },
-        "contextElements": [
-          {
             "tagName": "div",
-            "className": "styled__BaseModalWrapper-sc-1j2ymu8-0 eAgXBU skool-ui-base-modal",
-            "position": "fixed",
-            "zIndex": 1300,
-            "level": 1,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "div",
-            "className": "",
-            "position": "static",
-            "zIndex": 0,
-            "level": 2,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "body",
-            "className": "",
-            "position": "static",
-            "zIndex": 0,
-            "level": 3,
-            "relationship": "parent"
-          },
-          {
-            "tagName": "div",
-            "className": "styled__ModalContent-sc-1j2ymu8-2 dyZqYB",
+            "className": "styled__Disclaimers-sc-1w5znzb-4 gaEuSN",
             "position": "static",
             "zIndex": 0,
             "level": 0,
@@ -250,8 +364,8 @@
           }
         ]
       },
-      "createdAt": "2025-06-18T12:47:57.885Z",
-      "lastUpdated": "2025-06-18T12:47:57.885Z"
+      "createdAt": "2025-06-18T21:32:34.525Z",
+      "lastUpdated": "2025-06-18T21:32:34.525Z"
     }
   ]
 }

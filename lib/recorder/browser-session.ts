@@ -1105,9 +1105,15 @@ export class LiveBrowserSession {
       }
     }
     
-    // Get type and name from training data or use defaults
+    // Get type and name from training data - REQUIRE user-provided name
     const componentType = trainingData.componentType || 'modal';
-    const componentName = trainingData.componentName || `${componentType}_${Date.now()}`;
+    const componentName = trainingData.componentName;
+    
+    // Only save if user provided a component name
+    if (!componentName || componentName.trim() === '') {
+      console.log('[Modal Training] Skipping save - no user-provided component name');
+      return;
+    }
 
     const trainedComponent: TrainedComponent = {
       id: componentId,
@@ -1206,46 +1212,84 @@ export class LiveBrowserSession {
 
   // Generate a specific CSS selector for the modal
   private generateModalSelector(trainingData: any): string {
-    console.log('[Modal Training] Generating selector for:', {
+    console.log('[Modal Training] Generating precise hierarchical selector for:', {
       tagName: trainingData.tagName,
       id: trainingData.id,
       className: trainingData.className,
-      allClasses: trainingData.allClasses,
-      primaryClass: trainingData.primaryClass
+      contextElements: trainingData.contextElements?.length || 0
     });
     
-    // Add ID if available (highest specificity)
-    if (trainingData.id) {
-      const selector = `#${trainingData.id}`;
-      console.log('[Modal Training] Using ID selector:', selector);
-      return selector;
+    // Build precise hierarchical selector using ALL relevant context elements
+    const selectorParts: string[] = [];
+    
+    // If we have context elements (parent hierarchy), use them
+    if (trainingData.contextElements && trainingData.contextElements.length > 0) {
+      // Get parent elements sorted by level (closest parent first)
+      const parents = trainingData.contextElements
+        .filter((el: any) => el.relationship === 'parent')
+        .sort((a: any, b: any) => a.level - b.level);
+      
+      // Build selectors for ALL parent elements to create precise path
+      // Skip only body and html tags
+      const parentSelectors = parents
+        .filter((parent: any) => {
+          const tag = parent.tagName.toLowerCase();
+          return tag !== 'body' && tag !== 'html';
+        })
+        .map((parent: any) => {
+          // Always prefer classes if available
+          if (parent.className && parent.className.trim()) {
+            const classes = parent.className.split(' ').filter((cls: string) => cls.trim());
+            if (classes.length > 0) {
+              return `.${classes[0]}`;
+            }
+          }
+          // Use tag name with direct child combinator for elements without classes
+          return `${parent.tagName.toLowerCase()}`;
+        });
+      
+      // Add parents in reverse order (outermost to innermost)
+      selectorParts.push(...parentSelectors.reverse());
     }
     
-    // For classes, use the exact class from the element
-    const classString = trainingData.allClasses || trainingData.className || '';
-    if (classString && classString.trim() !== '') {
-      const classes = classString.split(' ').filter((cls: string) => cls.trim());
+    // Add the target element selector
+    let targetSelector = '';
+    
+    // Use ID if available (highest specificity)
+    if (trainingData.id) {
+      targetSelector = `#${trainingData.id}`;
+    } else {
+      // Use class if available
+      const classString = trainingData.allClasses || trainingData.className || '';
+      if (classString && classString.trim() !== '') {
+        const classes = classString.split(' ').filter((cls: string) => cls.trim());
+        if (classes.length > 0) {
+          targetSelector = `.${classes[0]}`;
+        }
+      }
       
-      console.log('[Modal Training] Classes found:', classes);
-      
-      if (classes.length > 0) {
-        // Prioritize the first class which is usually the most specific
-        // This matches what's shown in the training dialog
-        const selector = `.${classes[0]}`;
-        console.log('[Modal Training] Using class selector:', selector);
-        return selector;
+      // Fall back to tag name only if no class
+      if (!targetSelector && trainingData.tagName) {
+        targetSelector = trainingData.tagName.toLowerCase();
       }
     }
     
-    // Only use tag name as last resort
-    if (trainingData.tagName) {
-      const tagName = trainingData.tagName.toLowerCase();
-      console.warn(`[Modal Training] No classes found, using tag selector: ${tagName}`);
-      return tagName;
+    if (targetSelector) {
+      selectorParts.push(targetSelector);
     }
     
-    console.error('[Modal Training] No suitable selector found, using div as fallback');
-    return 'div'; // Fallback
+    // Join with direct child combinator (>) for precise path
+    let hierarchicalSelector = selectorParts.join(' > ');
+    
+    console.log('[Modal Training] Generated precise hierarchical selector:', hierarchicalSelector);
+    
+    // Fallback to simple selector if no hierarchy
+    if (!hierarchicalSelector || hierarchicalSelector.trim() === '') {
+      console.warn('[Modal Training] No hierarchical selector generated, using fallback');
+      return trainingData.tagName ? trainingData.tagName.toLowerCase() : 'div';
+    }
+    
+    return hierarchicalSelector;
   }
 
   // Load and apply site-specific rules to browser
@@ -4614,36 +4658,7 @@ export class LiveBrowserSession {
             trainingOverlay.appendChild(highlight);
             currentHighlight = highlight;
 
-            // Show element info
-            const info = document.createElement('div');
-            info.style.cssText = `
-              position: fixed !important;
-              top: ${rect.bottom + 5}px !important;
-              left: ${rect.left}px !important;
-              background: rgba(0, 0, 0, 0.8) !important;
-              color: white !important;
-              padding: 5px 10px !important;
-              border-radius: 4px !important;
-              font-family: monospace !important;
-              font-size: 11px !important;
-              z-index: 2147483647 !important;
-              max-width: 300px !important;
-            `;
-            
-            const tagName = element.tagName.toLowerCase();
-            const className = element.className ? element.className.split(' ')[0] : 'no-class';
-            const id = element.id || 'no-id';
-            
-            info.innerHTML = `
-              <div><strong>${tagName}</strong> .${className} #${id}</div>
-              <div>Modal Score: ${modalScore}</div>
-            `;
-            
-            trainingOverlay.appendChild(info);
-            
-            setTimeout(() => {
-              if (info.parentNode) info.remove();
-            }, 2000);
+            // Don't show element info boxes anymore
           };
 
           // Calculate modal score for an element
@@ -4681,6 +4696,7 @@ export class LiveBrowserSession {
 
           // Define event handlers with proper references
           const handleMouseOver = (e: Event) => {
+            e.stopPropagation(); // Prevent event bubbling
             const target = e.target as Element;
             if (target && target !== trainingOverlay && target !== instructionPanel && 
                 !instructionPanel.contains(target)) {
@@ -4864,7 +4880,14 @@ export class LiveBrowserSession {
                 
                 const typeSelect = dialog.querySelector('#component-type') as HTMLSelectElement;
                 const componentType = typeSelect?.value || 'modal';
-                const componentName = nameInput?.value || `${componentType}_${Date.now()}`;
+                const componentName = nameInput?.value?.trim();
+                
+                // Require user to enter a component name
+                if (!componentName) {
+                  alert('Please enter a component name before saving.');
+                  nameInput?.focus();
+                  return;
+                }
                 
                 // Extract training data with type and name
                 const trainingData = extractModalFeatures(target) as any;
@@ -5321,7 +5344,6 @@ export class LiveBrowserSession {
                   width: ${rect.width}px !important;
                   height: ${rect.height}px !important;
                   border: 3px solid #00ff00 !important;
-                  background: rgba(0, 255, 0, 0.1) !important;
                   pointer-events: none !important;
                   z-index: 999998 !important;
                   border-radius: 4px !important;
@@ -5975,24 +5997,7 @@ export class LiveBrowserSession {
             trainingOverlay.appendChild(highlight);
             currentHighlight = highlight;
 
-            // Show element info
-            const info = document.createElement('div');
-            info.style.cssText = `
-              position: fixed !important;
-              top: ${rect.bottom + 5}px !important;
-              left: ${rect.left}px !important;
-              background: rgba(0, 0, 0, 0.8) !important;
-              color: white !important;
-              padding: 5px 10px !important;
-              border-radius: 4px !important;
-              font-family: monospace !important;
-              font-size: 11px !important;
-              z-index: 2147483647 !important;
-            `;
-            info.textContent = `${element.tagName.toLowerCase()}${element.className ? '.' + element.className.split(' ').slice(0,2).join('.') : ''} (Score: ${modalScore})`;
-            trainingOverlay.appendChild(info);
-            
-            setTimeout(() => info.remove(), 3000);
+            // Don't show element info boxes anymore
           };
 
           // Modal score calculation function
@@ -6040,8 +6045,11 @@ export class LiveBrowserSession {
 
           // Mouseover handler for highlighting
           const mouseoverHandler = (e: MouseEvent) => {
+            e.stopPropagation(); // Prevent event bubbling
             if ((e.target as Element)?.closest('#training-instruction-panel')) return;
-            if (e.target) highlightElement(e.target as Element);
+            if (e.target) {
+              highlightElement(e.target as Element);
+            }
           };
 
           // Training click handler
@@ -6157,7 +6165,8 @@ export class LiveBrowserSession {
             
             dialog.innerHTML = `
               <h3 style="margin: 0 0 15px 0; color: #333;">Train Modal Component</h3>
-              <p><strong>Element:</strong> ${target.tagName?.toLowerCase() || 'unknown'}${target.className ? '.' + target.className.split(' ').slice(0,2).join('.') : ''}</p>
+              <p><strong>Element:</strong> ${target.tagName?.toLowerCase() || 'unknown'}${target.id ? '#' + target.id : ''}${target.className ? '.' + target.className.split(' ')[0] : ''}</p>
+              <p style="font-size: 12px; color: #666;"><strong>Preview:</strong> ${target.textContent?.slice(0, 50).replace(/\s+/g, ' ').trim() || 'No text content'}${target.textContent && target.textContent.length > 50 ? '...' : ''}</p>
               <p><strong>Modal Score:</strong> ${modalScore}/100</p>
               <div style="margin: 15px 0;">
                 <label for="component-type">Component Type:</label><br>
@@ -6203,7 +6212,14 @@ export class LiveBrowserSession {
                 
                 try {
                   const componentType = (dialog.querySelector('#component-type') as HTMLSelectElement)?.value || 'modal';
-                  const componentName = (dialog.querySelector('#component-name') as HTMLInputElement)?.value || 'Unnamed Component';
+                  const componentName = (dialog.querySelector('#component-name') as HTMLInputElement)?.value?.trim();
+                  
+                  // Require user to enter a component name
+                  if (!componentName) {
+                    alert('Please enter a component name before saving.');
+                    (dialog.querySelector('#component-name') as HTMLInputElement)?.focus();
+                    return;
+                  }
                   
                   console.log('[Modal Training] Saving:', { componentType, componentName });
                   
