@@ -1000,6 +1000,9 @@ export class LiveBrowserSession {
         return; // Skip this training data if it's malformed
       }
       
+      console.log(`[Modal Training] Processing training data for component: ${trainingData.componentName || 'unnamed'}`);
+      console.log(`[Modal Training] Element info: ${trainingData.tagName}.${trainingData.primaryClass || 'no-class'}`);
+      
       // ALWAYS use the new consolidated system for training data
       await this.updateSiteSpecificParsingRules(trainingData);
       console.log(`[Modal Training] Updated consolidated parsing rules for domain: ${this.currentSiteDomain}`);
@@ -1064,9 +1067,43 @@ export class LiveBrowserSession {
     const currentPagePath = new URL(currentPageUrl).pathname;
     const componentId = this.generateComponentId(trainingData);
     
-    const existingIndex = siteRules.trainedComponents.findIndex(
+    // Check for duplicates - prevent saving the same element twice
+    const selector = this.generateModalSelector(trainingData);
+    const duplicateCheck = siteRules.trainedComponents.find(
+      comp => {
+        // Check if it's the same selector on the same page
+        if (comp.selector === selector && comp.pageUrl === currentPageUrl) {
+          // If the existing one has a generic name (modal_NNNN) and we have a user-provided name, update it
+          if (comp.name.match(/^modal_\d+$/) && trainingData.componentName) {
+            return false; // Allow update with better name
+          }
+          return true; // It's a duplicate
+        }
+        return false;
+      }
+    );
+    
+    if (duplicateCheck) {
+      console.log(`[Modal Training] Skipping duplicate - component with selector "${selector}" already exists on this page`);
+      return;
+    }
+    
+    // Also check if we should replace an existing entry with a generic name
+    let existingIndex = siteRules.trainedComponents.findIndex(
       comp => comp.id === componentId && comp.pageUrl === currentPageUrl
     );
+    
+    // If not found by ID, check if we should replace a generic entry with the same selector
+    if (existingIndex === -1 && trainingData.componentName) {
+      existingIndex = siteRules.trainedComponents.findIndex(
+        comp => comp.selector === selector && 
+                comp.pageUrl === currentPageUrl && 
+                comp.name.match(/^modal_\d+$/)
+      );
+      if (existingIndex >= 0) {
+        console.log(`[Modal Training] Replacing generic component "${siteRules.trainedComponents[existingIndex].name}" with user-named "${trainingData.componentName}"`);
+      }
+    }
     
     // Get type and name from training data or use defaults
     const componentType = trainingData.componentType || 'modal';
@@ -1117,39 +1154,98 @@ export class LiveBrowserSession {
   
   // Generate unique component ID based on element characteristics
   private generateComponentId(trainingData: any): string {
+    // ALWAYS use component name if provided (from user input)
+    // This ensures uniqueness and consistency
+    if (trainingData.componentName) {
+      const cleanName = trainingData.componentName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      console.log(`[Modal Training] Using user-provided component ID: ${cleanName}`);
+      return cleanName;
+    }
+    
+    // Fallback to generated ID only if no name provided
+    console.warn('[Modal Training] No component name provided, generating ID from element characteristics');
+    
     const parts = [];
-    if (trainingData.primaryClass) parts.push(trainingData.primaryClass);
-    if (trainingData.tagName) parts.push(trainingData.tagName);
-    if (trainingData.position) parts.push(trainingData.position);
-    if (trainingData.zIndex) parts.push(`z${trainingData.zIndex}`);
-    return parts.join('_').replace(/[^a-zA-Z0-9_-]/g, '') || `component_${Date.now()}`;
+    
+    // Use modal-specific class names first
+    if (trainingData.allClasses || trainingData.className) {
+      const classString = trainingData.allClasses || trainingData.className || '';
+      const classes = classString.split(' ').filter((cls: string) => cls.trim());
+      const modalClass = classes.find((cls: string) => 
+        cls.includes('modal') || cls.includes('Modal') ||
+        cls.includes('dialog') || cls.includes('Dialog') ||
+        cls.includes('wrapper') || cls.includes('Wrapper')
+      );
+      if (modalClass) {
+        parts.push(modalClass);
+      } else if (classes[0]) {
+        parts.push(classes[0]);
+      }
+    }
+    
+    // Add tag name for context
+    if (trainingData.tagName) {
+      parts.push(trainingData.tagName.toUpperCase());
+    }
+    
+    // If we still have no parts, use timestamp
+    if (parts.length === 0) {
+      return `component_${Date.now()}`;
+    }
+    
+    const id = parts.join('_').replace(/[^a-zA-Z0-9_-]/g, '') || `component_${Date.now()}`;
+    
+    // Ensure ID doesn't start with a number
+    if (/^[0-9]/.test(id)) {
+      return `comp_${id}`;
+    }
+    
+    console.log(`[Modal Training] Generated component ID: ${id}`);
+    return id;
   }
 
   // Generate a specific CSS selector for the modal
   private generateModalSelector(trainingData: any): string {
-    // For the primary class, use it directly
-    if (trainingData.primaryClass) {
-      // If it's a styled-component class like "styled__ModalWrapper-sc-7eym6d-0"
-      if (trainingData.primaryClass.includes('styled__')) {
-        return `.${trainingData.primaryClass}`;
-      }
-      
-      // For other classes, combine with tag if available
-      const tag = trainingData.tagName ? trainingData.tagName.toLowerCase() : '';
-      return tag ? `${tag}.${trainingData.primaryClass}` : `.${trainingData.primaryClass}`;
-    }
+    console.log('[Modal Training] Generating selector for:', {
+      tagName: trainingData.tagName,
+      id: trainingData.id,
+      className: trainingData.className,
+      allClasses: trainingData.allClasses,
+      primaryClass: trainingData.primaryClass
+    });
     
-    // Fallback to tag name
-    if (trainingData.tagName) {
-      return trainingData.tagName.toLowerCase();
-    }
-    
-    // Last resort - attribute selector
+    // Add ID if available (highest specificity)
     if (trainingData.id) {
-      return `#${trainingData.id}`;
+      const selector = `#${trainingData.id}`;
+      console.log('[Modal Training] Using ID selector:', selector);
+      return selector;
     }
     
-    return 'div'; // Generic fallback
+    // For classes, use the exact class from the element
+    const classString = trainingData.allClasses || trainingData.className || '';
+    if (classString && classString.trim() !== '') {
+      const classes = classString.split(' ').filter((cls: string) => cls.trim());
+      
+      console.log('[Modal Training] Classes found:', classes);
+      
+      if (classes.length > 0) {
+        // Prioritize the first class which is usually the most specific
+        // This matches what's shown in the training dialog
+        const selector = `.${classes[0]}`;
+        console.log('[Modal Training] Using class selector:', selector);
+        return selector;
+      }
+    }
+    
+    // Only use tag name as last resort
+    if (trainingData.tagName) {
+      const tagName = trainingData.tagName.toLowerCase();
+      console.warn(`[Modal Training] No classes found, using tag selector: ${tagName}`);
+      return tagName;
+    }
+    
+    console.error('[Modal Training] No suitable selector found, using div as fallback');
+    return 'div'; // Fallback
   }
 
   // Load and apply site-specific rules to browser
@@ -1895,7 +1991,10 @@ export class LiveBrowserSession {
               timestamp: new Date().toISOString()
             };
             
-            console.log(`[Component Event] ${eventType} in ${component.name}:`, JSON.stringify(eventInfo));
+            // Skip logging keydown and input events to reduce noise
+            if (eventType !== 'keydown' && eventType !== 'input') {
+              console.log(`[Component Event] ${eventType} in ${component.name}:`, JSON.stringify(eventInfo));
+            }
             
             // Request screenshot for click interactions only
             if (eventType === 'click') {
@@ -1959,9 +2058,9 @@ export class LiveBrowserSession {
       };
       
       // Manual element finder for debugging
-      (window as any).findModalElements = function() {
+      (window as any).findModalElements = function(customSelector?: string) {
         console.log('[MANUAL DEBUG] Searching for modal elements...');
-        const selector = '.styled__ModalWrapper-sc-7eym6d-0';
+        const selector = customSelector || '[role="dialog"], [aria-modal="true"], .modal-content, .modal-body, .modal-wrapper';
         const elements = document.querySelectorAll(selector);
         console.log(`[MANUAL DEBUG] Found ${elements.length} elements with selector ${selector}`);
         elements.forEach((el, i) => {
@@ -2236,17 +2335,8 @@ export class LiveBrowserSession {
     // First try to find the specific modal that matches the trained one
     let modalElement = null;
     
-    // Try to find the trained modal element
-    if (modalId.includes('styled__ModalWrapper-sc-7eym6d-0')) {
-      // Looking for trained modal
-      modalElement = await this.page.$('.styled__ModalWrapper-sc-7eym6d-0');
-    }
-    
-    // If not found, try other common modal selectors
-    if (!modalElement) {
-      // Trying other modal selectors
-      modalElement = await this.page.$('[role="dialog"], [aria-modal="true"], .modal-content, .modal-body, .modal-wrapper');
-    }
+    // Try to find modal using common selectors
+    modalElement = await this.page.$('[role="dialog"], [aria-modal="true"], .modal-content, .modal-body, .modal-wrapper');
     
     if (modalElement) {
       await modalElement.screenshot({ path: screenshotPath });
@@ -4601,14 +4691,76 @@ export class LiveBrowserSession {
           const handleTrainingClick = (e: Event) => {
             const target = e.target as Element;
             
-            // Explicitly exclude ALL training UI elements including dialogs
-            if (target.id === 'exit-training' || 
-                target.closest('#exit-training') ||
-                target.closest('#training-instruction-panel') ||
-                target.closest('[id^="training-dialog-"]') || // Any training dialog
-                instructionPanel.contains(target) ||
-                trainingOverlay.contains(target)) {
-              console.log('[Modal Training] Click ignored - training UI element');
+            // Function to check if element should be skipped
+            const shouldSkip = (element: Element): boolean => {
+              // Skip if element is null or undefined
+              if (!element) return true;
+              
+              // Skip training UI elements
+              if (element.id === 'exit-training' || 
+                  element.closest('#exit-training') ||
+                  element.closest('#training-instruction-panel') ||
+                  element.closest('[id^="training-dialog-"]') || // Any training dialog
+                  instructionPanel.contains(element) ||
+                  trainingOverlay.contains(element)) {
+                return true;
+              }
+              
+              // Skip debug overlay elements
+              if (element.closest('#debug-overlay') || 
+                  element.closest('[id="debug-overlay"]') ||
+                  element.id === 'debug-overlay') {
+                return true;
+              }
+              
+              // Skip trained data panel elements
+              if (element.closest('#trained-data-panel') || 
+                  element.id === 'trained-data-panel' ||
+                  element.closest('.delete-component-btn')) {
+                return true;
+              }
+              
+              // Skip elements with specific training/debug styles or classes
+              const style = window.getComputedStyle(element);
+              if (style.fontFamily === 'monospace' && 
+                  (style.fontSize === '9px' || style.fontSize === '8px') &&
+                  (style.background?.includes('rgb(243, 156, 18)') || // Orange debug buttons
+                   style.background?.includes('rgb(102, 102, 102)') || // Gray debug buttons
+                   style.background?.includes('#f39c12') || // Orange buttons
+                   style.background?.includes('#666'))) { // Gray buttons
+                return true;
+              }
+              
+              // Skip elements with debug-style text content
+              const textContent = element.textContent?.trim() || '';
+              const debugButtonTexts = [
+                'Show Trained Data', 'Train Modal Detection', 'Debug Modals', 
+                'Capture Area', 'Hide', 'Show', 'Delete', 'Exit Training'
+              ];
+              if (debugButtonTexts.includes(textContent)) {
+                return true;
+              }
+              
+              // Skip buttons that are clearly UI controls (small, monospace, positioned)
+              if (element.tagName.toLowerCase() === 'button') {
+                const rect = element.getBoundingClientRect();
+                if (rect.width < 150 && rect.height < 50 && 
+                    (style.fontFamily === 'monospace' || style.fontSize === '9px')) {
+                  return true;
+                }
+              }
+              
+              return false;
+            };
+            
+            // Check if we should skip this element
+            if (shouldSkip(target)) {
+              console.log('[Modal Training] Click ignored - excluded element:', {
+                tagName: target.tagName,
+                id: target.id,
+                className: target.className,
+                textContent: target.textContent?.trim()?.substring(0, 50)
+              });
               return; // Don't prevent default, let the button work normally
             }
             
@@ -4719,6 +4871,18 @@ export class LiveBrowserSession {
                 trainingData.componentType = componentType;
                 trainingData.componentName = componentName;
                 
+                // Validate that this is actually a meaningful modal element
+                if (trainingData.modalScore < 30) {
+                  alert(`Warning: This element has a low modal score (${trainingData.modalScore}). Consider selecting a more modal-like element.`);
+                }
+                
+                // Check if selector would be too generic
+                const generatedSelector = trainingData.primaryClass ? 
+                  `.${trainingData.primaryClass}` : trainingData.tagName.toLowerCase();
+                if (generatedSelector === 'div' || generatedSelector === 'button' || generatedSelector === 'span') {
+                  console.warn('[Modal Training] Generated selector is generic:', generatedSelector, 'for element:', trainingData);
+                }
+                
                 console.log('[Modal Training] Element selected for training:', JSON.stringify(trainingData));
                 
                 dialog.remove();
@@ -4787,12 +4951,16 @@ export class LiveBrowserSession {
           const extractModalFeatures = (element: Element) => {
             const rect = element.getBoundingClientRect();
             const style = window.getComputedStyle(element);
-            const className = element.className || '';
+            // Ensure className is a string (sometimes it can be an SVGAnimatedString object)
+            const className = typeof element.className === 'string' 
+              ? element.className 
+              : (element.className as any).baseVal || element.getAttribute('class') || '';
             
-            return {
+            const result = {
               tagName: element.tagName.toLowerCase(),
               primaryClass: className.split(' ')[0] || 'no-class',
               allClasses: className,
+              className: className, // Add this for compatibility
               id: element.id || null,
               position: style.position,
               zIndex: parseInt(style.zIndex) || 0,
@@ -4808,6 +4976,15 @@ export class LiveBrowserSession {
               timestamp: new Date().toISOString(),
               url: window.location.href
             };
+            
+            console.log('[Modal Training] Extracted features:', {
+              tagName: result.tagName,
+              className: result.className,
+              allClasses: result.allClasses,
+              primaryClass: result.primaryClass
+            });
+            
+            return result;
           };
 
           // Exit training mode - use a more robust approach
@@ -5087,14 +5264,122 @@ export class LiveBrowserSession {
           }
         };
 
-        // Define showTrainedData function
+        // Define highlighting functions
+        (window as any).highlightTrainedComponents = (components: any[]) => {
+          console.log('[Highlight] Starting to highlight', components.length, 'trained components');
+          
+          // Remove any existing highlights first
+          (window as any).removeTrainedComponentHighlights();
+          
+          const highlightedComponents: any[] = [];
+          
+          components.forEach((comp, index) => {
+            try {
+              console.log('[Highlight] Attempting to highlight component:', comp.name, 'with selector:', comp.selector);
+              
+              // Try multiple ways to find the element
+              let elements = [];
+              
+              // Method 1: Use the stored selector
+              if (comp.selector) {
+                elements = Array.from(document.querySelectorAll(comp.selector));
+              }
+              
+              // Method 2: Use className if available
+              if (elements.length === 0 && comp.trainingData?.className) {
+                const className = comp.trainingData.className.split(' ')[0]; // Use first class
+                if (className) {
+                  elements = Array.from(document.querySelectorAll('.' + className));
+                }
+              }
+              
+              // Method 3: Use tagName as fallback
+              if (elements.length === 0 && comp.trainingData?.tagName) {
+                elements = Array.from(document.querySelectorAll(comp.trainingData.tagName));
+              }
+              
+              console.log('[Highlight] Found', elements.length, 'elements for component:', comp.name);
+              
+              // Skip if too many matches (likely a too-generic selector)
+              if (elements.length > 50) {
+                console.warn(`[Highlight] Skipping component "${comp.name}" - selector "${comp.selector}" matches ${elements.length} elements (too generic)`);
+                return;
+              }
+              
+              elements.forEach((element, elementIndex) => {
+                // Create highlight overlay
+                const highlight = document.createElement('div');
+                highlight.className = 'trained-component-highlight';
+                highlight.dataset.componentId = comp.id;
+                highlight.dataset.componentName = comp.name;
+                
+                const rect = element.getBoundingClientRect();
+                highlight.style.cssText = `
+                  position: fixed !important;
+                  top: ${rect.top}px !important;
+                  left: ${rect.left}px !important;
+                  width: ${rect.width}px !important;
+                  height: ${rect.height}px !important;
+                  border: 3px solid #00ff00 !important;
+                  background: rgba(0, 255, 0, 0.1) !important;
+                  pointer-events: none !important;
+                  z-index: 999998 !important;
+                  border-radius: 4px !important;
+                `;
+                
+                // Add label
+                const label = document.createElement('div');
+                label.style.cssText = `
+                  position: absolute !important;
+                  top: -25px !important;
+                  left: 0 !important;
+                  background: #00ff00 !important;
+                  color: white !important;
+                  padding: 2px 6px !important;
+                  border-radius: 3px !important;
+                  font-family: monospace !important;
+                  font-size: 10px !important;
+                  white-space: nowrap !important;
+                `;
+                label.textContent = comp.name;
+                highlight.appendChild(label);
+                
+                document.body.appendChild(highlight);
+                highlightedComponents.push({
+                  componentId: comp.id,
+                  componentName: comp.name,
+                  element: element,
+                  highlight: highlight
+                });
+                
+                console.log(`[Highlight] Added highlight for: ${comp.name} (element ${elementIndex + 1} of ${elements.length})`);
+              });
+              
+            } catch (error) {
+              console.error('[Highlight] Error highlighting component:', comp.name, error);
+            }
+          });
+          
+          console.log('[Highlight] Successfully highlighted', highlightedComponents.length, 'components');
+          return highlightedComponents;
+        };
+        
+        (window as any).removeTrainedComponentHighlights = () => {
+          const highlights = document.querySelectorAll('.trained-component-highlight');
+          highlights.forEach(highlight => highlight.remove());
+          console.log('[Highlight] Removed', highlights.length, 'highlights');
+        };
 
+        // Define showTrainedData function
         (window as any).showTrainedData = () => {
           console.log('[Trained Data] Showing trained components');
           
-          // Remove any existing panel
+          // Remove any existing panel and highlights
           const existing = document.getElementById('trained-data-panel');
           if (existing) existing.remove();
+          
+          // Remove any existing highlights
+          (window as any).removeTrainedComponentHighlights();
           
           const panel = document.createElement('div');
           panel.id = 'trained-data-panel';
@@ -5119,34 +5404,35 @@ export class LiveBrowserSession {
           const siteRules = (window as any).siteSpecificModalRules;
           const currentPath = window.location.pathname;
           
+          console.log('[Trained Data Panel] Site rules:', siteRules);
+          console.log('[Trained Data Panel] Components count:', siteRules?.trainedComponents?.length);
+          
           let html = `<h3 style="margin: 0 0 15px 0; color: #f39c12;">📋 Trained Components</h3>`;
           
           if (!siteRules || !siteRules.trainedComponents || siteRules.trainedComponents.length === 0) {
             html += '<div style="color: #e74c3c;">No trained components found for this domain.</div>';
           } else {
             // Show both page-specific and all domain components
-            const pageComponents = siteRules.trainedComponents.filter((comp: any) => 
-              comp.pagePath === currentPath || comp.pageUrl === window.location.href
-            );
+            const pageComponents = siteRules.trainedComponents.filter((comp: any) => {
+              const matches = comp.pagePath === currentPath || comp.pageUrl === window.location.href;
+              console.log(`[Trained Data Panel] Checking component "${comp.name}" - pagePath: "${comp.pagePath}" vs currentPath: "${currentPath}" - Match: ${matches}`);
+              return matches;
+            });
             const allComponents = siteRules.trainedComponents;
             
             html += `<div style="margin-bottom: 10px; color: #95a5a6;">
               Domain: ${siteRules.domain}<br>
+              Current Path: ${currentPath}<br>
               Total Components: ${allComponents.length}<br>
               This Page: ${pageComponents.length}
             </div>`;
             
-            // Show page-specific components first, then all others
-            const componentsToShow = pageComponents.length > 0 ? pageComponents : allComponents;
-            
-            if (componentsToShow.length === 0) {
-              html += '<div style="color: #3498db;">No components trained for this domain.</div>';
+            // Only show page-specific components
+            if (pageComponents.length === 0) {
+              html += '<div style="color: #3498db;">No components trained for this page.</div>';
             } else {
-              if (pageComponents.length === 0 && allComponents.length > 0) {
-                html += '<div style="color: #f39c12; margin-bottom: 10px;">Showing all trained components for this domain:</div>';
-              }
               html += '<div style="margin-top: 15px;">';
-              componentsToShow.forEach((comp: any) => {
+              pageComponents.forEach((comp: any) => {
                 html += `
                   <div style="
                     background: rgba(255, 255, 255, 0.1); 
@@ -5191,7 +5477,11 @@ export class LiveBrowserSession {
           // Add close button
           html += `
             <div style="text-align: right; margin-top: 15px; border-top: 1px solid #34495e; padding-top: 15px;">
-              <button onclick="document.getElementById('trained-data-panel').remove(); return false;" style="
+              <button onclick="
+                document.getElementById('trained-data-panel').remove(); 
+                window.removeTrainedComponentHighlights(); 
+                return false;
+              " style="
                 background: #95a5a6; 
                 color: white; 
                 border: none; 
@@ -5205,6 +5495,39 @@ export class LiveBrowserSession {
           
           panel.innerHTML = html;
           document.body.appendChild(panel);
+          
+          // Highlight trained components on the page
+          if (siteRules && siteRules.trainedComponents && siteRules.trainedComponents.length > 0) {
+            console.log('[Trained Data] Highlighting components on page');
+            (window as any).highlightTrainedComponents(siteRules.trainedComponents);
+            
+            // Add green borders to corresponding items in the dialog
+            setTimeout(() => {
+              // Find all component divs in the panel and check if they have corresponding highlights
+              const componentDivs = panel.querySelectorAll('div[style*="background: rgba(255, 255, 255, 0.1)"]');
+              componentDivs.forEach(div => {
+                // Get the component name from the strong tag
+                const nameElement = div.querySelector('strong');
+                if (nameElement) {
+                  const componentName = nameElement.textContent;
+                  // Check if there's a highlight for this component
+                  const highlights = document.querySelectorAll('.trained-component-highlight');
+                  let hasHighlight = false;
+                  highlights.forEach(highlight => {
+                    if ((highlight as HTMLElement).dataset.componentName === componentName) {
+                      hasHighlight = true;
+                    }
+                  });
+                  
+                  if (hasHighlight) {
+                    (div as HTMLElement).style.border = '2px solid #00ff00';
+                    (div as HTMLElement).style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
+                    console.log('[Highlight] Added green border to panel item:', componentName);
+                  }
+                }
+              });
+            }, 200);
+          }
           
           // Create custom modal confirmation system that bypasses all other event handlers
           const createDeleteModal = (componentId: string, componentName: string) => {
@@ -5324,8 +5647,10 @@ export class LiveBrowserSession {
                 const componentId = deleteBtn.getAttribute('data-component-id');
                 const componentName = deleteBtn.getAttribute('data-component-name');
                 
-                console.log('[DELETE] Delete button clicked for:', componentId, componentName);
-                createDeleteModal(componentId, componentName);
+                if (componentId && componentName) {
+                  console.log('[DELETE] Delete button clicked for:', componentId, componentName);
+                  createDeleteModal(componentId, componentName);
+                }
               }
             }
           });
@@ -5761,7 +6086,23 @@ export class LiveBrowserSession {
               (target.tagName === 'BUTTON' && target.closest('[id^="modal-training-dialog"]')) ||
               target.id === 'save-training-btn' ||
               target.id === 'cancel-training-btn' ||
-              target.closest('#simple-discovery')
+              target.closest('#simple-discovery') ||
+              target.closest('#debug-overlay') ||
+              target.closest('#trained-data-panel') ||
+              target.closest('.trained-component-highlight') ||
+              // Skip any debug overlay buttons by checking their style attributes
+              (target.tagName === 'BUTTON' && target.style.fontFamily === 'monospace') ||
+              // Skip buttons with debug-style backgrounds
+              (target.tagName === 'BUTTON' && (
+                target.style.background?.includes('rgb(243, 156, 18)') ||
+                target.style.background?.includes('rgb(142, 68, 173)') ||
+                target.style.background?.includes('rgb(155, 89, 182)')
+              )) ||
+              // Skip any element that looks like a debug control
+              target.textContent === 'Show Trained Data' ||
+              target.textContent === 'Train Modal Detection' ||
+              target.textContent === 'Hide' ||
+              target.textContent === 'Show'
             );
             
             if (shouldSkip) {
