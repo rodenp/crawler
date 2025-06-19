@@ -3,7 +3,36 @@ import { getBrowserSession, getBrowserSessions } from '@/lib/shared/global-state
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, action } = await request.json();
+    // Check content-type header
+    const contentType = request.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('[Modal Training API] Invalid content-type:', contentType);
+    }
+    
+    // Handle empty request body
+    let body;
+    try {
+      const text = await request.text();
+      console.log('[Modal Training API] Raw request body:', text);
+      
+      if (!text || text.trim() === '') {
+        console.error('[Modal Training API] Empty request body received');
+        return NextResponse.json(
+          { error: 'Empty request body' },
+          { status: 400 }
+        );
+      }
+      
+      body = JSON.parse(text);
+    } catch (jsonError) {
+      console.error('[Modal Training API] JSON parsing error:', jsonError);
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body', details: jsonError instanceof Error ? jsonError.message : 'Unknown error' },
+        { status: 400 }
+      );
+    }
+    
+    const { sessionId, action } = body;
     
     console.log(`[Modal Training API] Received action: ${action} for session: ${sessionId}`);
     

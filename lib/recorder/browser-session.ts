@@ -1031,6 +1031,8 @@ export class LiveBrowserSession {
     // New structure: single file with all trained components
     interface TrainedComponent {
       id: string;
+      parentId?: string; // ID of parent modal (null/undefined for root modals)
+      internalName: string; // Internal name with spaces replaced by underscores
       pageUrl: string;
       pagePath: string;
       type: string; // 'modal', 'popup', 'dialog', 'notification', 'custom'
@@ -1069,10 +1071,24 @@ export class LiveBrowserSession {
     
     // Check for duplicates - prevent saving the same element twice
     const selector = this.generateModalSelector(trainingData);
+    console.log(`[Modal Training] Generated selector: ${selector}`);
+    
     const duplicateCheck = siteRules.trainedComponents.find(
       comp => {
         // Check if it's the same selector on the same page
-        if (comp.selector === selector && comp.pageUrl === currentPageUrl) {
+        const isSameSelector = comp.selector === selector;
+        const isSamePage = comp.pageUrl === currentPageUrl || comp.pagePath === currentPagePath;
+        
+        console.log(`[Modal Training] Checking duplicate against ${comp.name}:`, {
+          isSameSelector,
+          isSamePage,
+          existingSelector: comp.selector,
+          newSelector: selector,
+          existingUrl: comp.pageUrl,
+          newUrl: currentPageUrl
+        });
+        
+        if (isSameSelector && isSamePage) {
           // If the existing one has a generic name (modal_NNNN) and we have a user-provided name, update it
           if (comp.name.match(/^modal_\d+$/) && trainingData.componentName) {
             return false; // Allow update with better name
@@ -1085,6 +1101,7 @@ export class LiveBrowserSession {
     
     if (duplicateCheck) {
       console.log(`[Modal Training] Skipping duplicate - component with selector "${selector}" already exists on this page`);
+      console.log(`[Modal Training] Existing component:`, duplicateCheck);
       return;
     }
     
@@ -1115,8 +1132,16 @@ export class LiveBrowserSession {
       return;
     }
 
+    // Generate internal name (lowercase with spaces replaced by underscores)
+    const internalName = componentName.toLowerCase().replace(/\s+/g, '_');
+    
+    // Determine parent modal if any (will be calculated from DOM hierarchy)
+    const parentId = await this.detectParentModal(trainingData, siteRules.trainedComponents);
+
     const trainedComponent: TrainedComponent = {
       id: componentId,
+      parentId: parentId || undefined, // undefined for root modals
+      internalName: internalName,
       pageUrl: currentPageUrl,
       pagePath: currentPagePath,
       type: componentType,
@@ -1144,9 +1169,23 @@ export class LiveBrowserSession {
     siteRules.version++;
     
     try {
+      // Log the data being written
+      console.log(`[Modal Training] Writing ${siteRules.trainedComponents.length} components to file`);
+      console.log(`[Modal Training] Components:`, siteRules.trainedComponents.map(c => ({
+        id: c.id,
+        name: c.name,
+        selector: c.selector,
+        pageUrl: c.pageUrl
+      })));
+      
       await fs.writeFile(rulesFile, JSON.stringify(siteRules, null, 2));
       console.log(`[Modal Training] Successfully wrote rules file: ${rulesFile}`);
       console.log(`[Modal Training] File contains ${siteRules.trainedComponents.length} components`);
+      
+      // Verify the file was written
+      const verifyContent = await fs.readFile(rulesFile, 'utf-8');
+      const verifyData = JSON.parse(verifyContent);
+      console.log(`[Modal Training] Verified file contains ${verifyData.trainedComponents.length} components`);
     } catch (writeError) {
       console.error(`[Modal Training] Error writing rules file:`, writeError);
       throw writeError;
@@ -1158,56 +1197,14 @@ export class LiveBrowserSession {
     console.log(`[Modal Rules] Updated parsing rules for ${this.currentSiteDomain}: ${siteRules.trainedComponents.length} total components`);
   }
   
-  // Generate unique component ID based on element characteristics
+  // Generate unique component ID using random hex string
   private generateComponentId(trainingData: any): string {
-    // ALWAYS use component name if provided (from user input)
-    // This ensures uniqueness and consistency
-    if (trainingData.componentName) {
-      const cleanName = trainingData.componentName.replace(/[^a-zA-Z0-9_-]/g, '_');
-      console.log(`[Modal Training] Using user-provided component ID: ${cleanName}`);
-      return cleanName;
-    }
-    
-    // Fallback to generated ID only if no name provided
-    console.warn('[Modal Training] No component name provided, generating ID from element characteristics');
-    
-    const parts = [];
-    
-    // Use modal-specific class names first
-    if (trainingData.allClasses || trainingData.className) {
-      const classString = trainingData.allClasses || trainingData.className || '';
-      const classes = classString.split(' ').filter((cls: string) => cls.trim());
-      const modalClass = classes.find((cls: string) => 
-        cls.includes('modal') || cls.includes('Modal') ||
-        cls.includes('dialog') || cls.includes('Dialog') ||
-        cls.includes('wrapper') || cls.includes('Wrapper')
-      );
-      if (modalClass) {
-        parts.push(modalClass);
-      } else if (classes[0]) {
-        parts.push(classes[0]);
-      }
-    }
-    
-    // Add tag name for context
-    if (trainingData.tagName) {
-      parts.push(trainingData.tagName.toUpperCase());
-    }
-    
-    // If we still have no parts, use timestamp
-    if (parts.length === 0) {
-      return `component_${Date.now()}`;
-    }
-    
-    const id = parts.join('_').replace(/[^a-zA-Z0-9_-]/g, '') || `component_${Date.now()}`;
-    
-    // Ensure ID doesn't start with a number
-    if (/^[0-9]/.test(id)) {
-      return `comp_${id}`;
-    }
-    
-    console.log(`[Modal Training] Generated component ID: ${id}`);
-    return id;
+    // Generate a random 16-character hex string
+    // Use Node.js crypto module (this runs on the server side)
+    const crypto = require('crypto');
+    const randomId = crypto.randomBytes(8).toString('hex');
+    console.log(`[Modal Training] Generated random component ID: ${randomId}`);
+    return randomId;
   }
 
   // Generate a specific CSS selector for the modal
@@ -1443,6 +1440,57 @@ export class LiveBrowserSession {
 
       return context;
     }, trainingData);
+  }
+
+  // Detect parent modal by checking DOM hierarchy
+  private async detectParentModal(trainingData: any, existingComponents: any[]): Promise<string | null> {
+    if (!this.page) return null;
+
+    const currentPageUrl = this.currentUrl;
+    const currentPagePath = new URL(currentPageUrl).pathname;
+
+    return await this.page.evaluate(({ data, components, pageUrl, pagePath }: { data: any, components: any[], pageUrl: string, pagePath: string }) => {
+      // Find the element being trained
+      const x = (data.left || 0) + (data.width || 0) / 2;
+      const y = (data.top || 0) + (data.height || 0) / 2;
+      
+      if (!isFinite(x) || !isFinite(y)) return null;
+      
+      const targetElement = document.elementFromPoint(x, y);
+      if (!targetElement) return null;
+
+      // Filter components to only those on the same page
+      const samePageComponents = components.filter(comp => 
+        comp.pageUrl === pageUrl || comp.pagePath === pagePath
+      );
+      
+      console.log(`[Modal Hierarchy] Checking ${samePageComponents.length} components on same page (${pagePath})`);
+
+      // Walk up the DOM tree to find potential parent modals
+      let current = targetElement.parentElement;
+      while (current && current !== document.body) {
+        // Check if this parent matches any existing trained components ON THE SAME PAGE
+        for (const comp of samePageComponents) {
+          try {
+            // Check if this element matches the component's selector
+            const matchingElements = document.querySelectorAll(comp.selector);
+            for (const elem of Array.from(matchingElements)) {
+              if (elem === current || elem.contains(current)) {
+                // Found a parent modal
+                console.log(`[Modal Hierarchy] Found parent modal: ${comp.name} (${comp.id})`);
+                return comp.id;
+              }
+            }
+          } catch (e) {
+            console.warn(`[Modal Hierarchy] Error checking selector ${comp.selector}:`, e);
+          }
+        }
+        current = current.parentElement;
+      }
+
+      console.log(`[Modal Hierarchy] No parent modal found on page ${pagePath}`);
+      return null;
+    }, { data: trainingData, components: existingComponents, pageUrl: currentPageUrl, pagePath: currentPagePath });
   }
 
   // Update training summary with patterns
@@ -4855,11 +4903,43 @@ export class LiveBrowserSession {
               const dialogId = `training-dialog-${Date.now()}`;
               dialog.id = dialogId;
               
+              // Check for parent modal by walking up the DOM
+              const detectParentModalInDOM = () => {
+                const siteRules = (window as any).siteSpecificModalRules;
+                if (!siteRules || !siteRules.trainedComponents) return null;
+                
+                let current = target.parentElement;
+                while (current && current !== document.body) {
+                  // Check if this parent matches any existing trained components
+                  for (const comp of siteRules.trainedComponents) {
+                    try {
+                      const matchingElements = document.querySelectorAll(comp.selector);
+                      for (const elem of Array.from(matchingElements)) {
+                        if (elem === current || elem.contains(current)) {
+                          return { id: comp.id, name: comp.name };
+                        }
+                      }
+                    } catch (e) {
+                      console.warn(`[Modal Hierarchy] Error checking selector ${comp.selector}:`, e);
+                    }
+                  }
+                  current = current.parentElement;
+                }
+                return null;
+              };
+
+              const parentModal = detectParentModalInDOM();
+              const parentInfo = parentModal ? 
+                `<div style="font-size: 12px; margin-bottom: 15px; color: #3498db;">
+                  Parent Modal: ${parentModal.name}
+                </div>` : '';
+
               dialog.innerHTML = `
                 <h3 style="margin: 0 0 15px 0; color: #ffa500;">🎯 Component Training</h3>
                 <div style="font-size: 12px; margin-bottom: 15px; color: #aaa;">
                   Element: ${target.tagName.toLowerCase()}.${target.className.split(' ')[0] || 'no-class'}
                 </div>
+                ${parentInfo}
                 
                 <div style="margin-bottom: 15px;">
                   <label style="display: block; margin-bottom: 5px; color: #ffa500;">Component Type:</label>
@@ -5497,18 +5577,44 @@ export class LiveBrowserSession {
             if (pageComponents.length === 0) {
               html += '<div style="color: #3498db;">No components trained for this page.</div>';
             } else {
-              html += '<div style="margin-top: 15px;">';
-              pageComponents.forEach((comp: any) => {
-                html += `
+              // Build a hierarchy tree for display
+              const buildHierarchy = (components: any[]) => {
+                const tree: any[] = [];
+                const lookup: any = {};
+                
+                // First pass: create lookup
+                components.forEach(comp => {
+                  lookup[comp.id] = { ...comp, children: [] };
+                });
+                
+                // Second pass: build tree
+                components.forEach(comp => {
+                  if (comp.parentId && lookup[comp.parentId]) {
+                    lookup[comp.parentId].children.push(lookup[comp.id]);
+                  } else {
+                    tree.push(lookup[comp.id]);
+                  }
+                });
+                
+                return tree;
+              };
+              
+              const renderComponent = (comp: any, level: number = 0) => {
+                const indentStyle = `padding-left: ${level * 20}px;`;
+                const hierarchyIndicator = level > 0 ? '└─ ' : '';
+                
+                return `
                   <div style="
                     background: rgba(255, 255, 255, 0.1); 
                     padding: 10px; 
                     margin-bottom: 10px; 
                     border-radius: 4px;
                     border: 1px solid rgba(255, 255, 255, 0.2);
+                    ${indentStyle}
                   ">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                       <div>
+                        <span style="color: #7f8c8d;">${hierarchyIndicator}</span>
                         <strong style="color: #3498db;">${comp.name}</strong>
                         <span style="
                           background: #27ae60; 
@@ -5518,6 +5624,11 @@ export class LiveBrowserSession {
                           font-size: 10px;
                           margin-left: 8px;
                         ">${comp.type}</span>
+                        ${comp.parentId ? `<span style="
+                          color: #9b59b6;
+                          font-size: 10px;
+                          margin-left: 8px;
+                        ">(child)</span>` : ''}
                       </div>
                       <button data-component-id="${comp.id}" data-component-name="${comp.name}" class="delete-component-btn" style="
                         background: #e74c3c; 
@@ -5530,11 +5641,20 @@ export class LiveBrowserSession {
                       ">Delete</button>
                     </div>
                     <div style="font-size: 10px; color: #95a5a6; margin-top: 5px;">
+                      ID: ${comp.id} | Internal: ${comp.internalName || comp.name.replace(/\s+/g, '_')}<br>
                       Selector: <code style="color: #e67e22;">${comp.selector}</code><br>
+                      ${comp.parentId ? `Parent: ${comp.parentId}<br>` : ''}
                       Created: ${new Date(comp.createdAt).toLocaleString()}
                     </div>
                   </div>
+                  ${comp.children ? comp.children.map((child: any) => renderComponent(child, level + 1)).join('') : ''}
                 `;
+              };
+              
+              html += '<div style="margin-top: 15px;">';
+              const hierarchicalComponents = buildHierarchy(pageComponents);
+              hierarchicalComponents.forEach((comp: any) => {
+                html += renderComponent(comp);
               });
               html += '</div>';
             }
